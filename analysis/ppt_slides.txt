@@ -1,0 +1,156 @@
+## slide1
+/02
+选题背景
+
+## slide2
+在大数据与文娱产业深度融合的当下，北京作为文化中心，文娱产业蓬勃发展但面临海量数据难以高效处理与直观呈现的问题。
+Hadoop
+凭借强大的分布式存储和并行计算能力，能整合多源异构数据。
+基于
+Hadoop
+实现北京文娱可视化，可助力洞察行业态势，挖掘潜在价值，推动产业创新发展
+。
+Background of the Topic Selection
+
+## slide3
+
+
+## slide4
+
+
+## slide5
+/04
+关键技术与实践难点
+
+## slide6
+
+
+## slide7
+
+
+## slide8
+/05
+项目流程
+
+## slide9
+工具 ： 八爪鱼
+数据的采集
+
+## slide10
+日志文件统一存放在：
+hdfs://node-1:8020/data/logs
+HDFS
+的
+JavaApi
+上传日志文件
+
+## slide11
+
+
+## slide12
+
+
+## slide13
+
+
+## slide14
+
+
+## slide15
+
+
+## slide16
+
+
+## slide17
+
+
+## slide18
+/06
+项目的可视化
+
+## slide19
+
+
+## slide20
+/07
+小组成员讲解
+
+## slide21
+
+
+## slide22
+
+
+## slide23
+
+
+## slide24
+
+
+## slide25
+
+
+## slide26
+
+
+## slide27
+
+
+## slide28
+
+
+## slide29
+
+
+## slide30
+
+
+## slide31
+
+
+## slide32
+
+
+## slide33
+
+
+## slide34
+
+
+## slide35
+
+
+## slide36
+
+
+## slide37
+
+
+## slide38
+
+
+## slide39
+
+
+## slide40
+
+
+## slide41
+
+
+## slide42
+
+
+## slide43
+
+
+## slide44
+/08
+总结与展望
+
+## slide45
+
+
+## slide46
+THANKS

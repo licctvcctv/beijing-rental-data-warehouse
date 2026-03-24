@@ -1,0 +1,58 @@
+USE wenyu_ads;
+
+DROP TABLE IF EXISTS ads_region_entertainment_count;
+CREATE TABLE ads_region_entertainment_count STORED AS TEXTFILE AS
+SELECT region, SUM(total_count) AS entertainment_count
+FROM wenyu_dws.dws_region_summary
+GROUP BY region;
+
+DROP TABLE IF EXISTS ads_movie_score_distribution;
+CREATE TABLE ads_movie_score_distribution STORED AS TEXTFILE AS
+SELECT score_level, movie_count, avg_score
+FROM wenyu_dws.dws_movie_score_summary;
+
+DROP TABLE IF EXISTS ads_show_price_top10;
+CREATE TABLE ads_show_price_top10 STORED AS TEXTFILE AS
+SELECT name, venue, region_std AS region, price_max, price_min, status_std, attention_num
+FROM wenyu_dws.dws_show_price_summary
+ORDER BY price_max DESC, attention_num DESC
+LIMIT 10;
+
+DROP TABLE IF EXISTS ads_show_status_ratio;
+CREATE TABLE ads_show_status_ratio STORED AS TEXTFILE AS
+SELECT status_std, show_count,
+       ROUND(show_count / SUM(show_count) OVER (), 4) AS status_ratio
+FROM wenyu_dws.dws_show_status_summary;
+
+DROP TABLE IF EXISTS ads_ktv_region_hotspot;
+CREATE TABLE ads_ktv_region_hotspot STORED AS TEXTFILE AS
+SELECT region_std AS region, ktv_count, avg_cost, avg_score
+FROM wenyu_dws.dws_ktv_region_summary
+ORDER BY ktv_count DESC, avg_score DESC;
+
+DROP TABLE IF EXISTS ads_ktv_cost_performance_top5;
+CREATE TABLE ads_ktv_cost_performance_top5 STORED AS TEXTFILE AS
+SELECT name, region_std AS region, avg_cost, overall_score, cost_performance, popularity_num
+FROM wenyu_dwd.dwd_ktv_detail
+WHERE avg_cost > 0
+ORDER BY cost_performance DESC, popularity_num DESC
+LIMIT 5;
+
+DROP TABLE IF EXISTS ads_sport_type_ratio_top5;
+CREATE TABLE ads_sport_type_ratio_top5 STORED AS TEXTFILE AS
+SELECT venue_type_std AS venue_type, venue_count,
+       ROUND(venue_count / SUM(venue_count) OVER (), 4) AS venue_ratio,
+       avg_score
+FROM wenyu_dws.dws_sport_type_summary
+ORDER BY venue_count DESC
+LIMIT 5;
+
+DROP TABLE IF EXISTS ads_scenic_free_ratio;
+CREATE TABLE ads_scenic_free_ratio STORED AS TEXTFILE AS
+SELECT '免费景点' AS scenic_type, SUM(CASE WHEN price_min = 0 THEN 1 ELSE 0 END) AS scenic_count,
+       ROUND(SUM(CASE WHEN price_min = 0 THEN 1 ELSE 0 END) / COUNT(1), 4) AS scenic_ratio
+FROM wenyu_dwd.dwd_scenic_detail
+UNION ALL
+SELECT '收费景点' AS scenic_type, SUM(CASE WHEN price_min > 0 THEN 1 ELSE 0 END) AS scenic_count,
+       ROUND(SUM(CASE WHEN price_min > 0 THEN 1 ELSE 0 END) / COUNT(1), 4) AS scenic_ratio
+FROM wenyu_dwd.dwd_scenic_detail;

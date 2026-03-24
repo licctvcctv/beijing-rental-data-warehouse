@@ -1,0 +1,11 @@
+.DS_Store
+*.pyc
+*.pyo
+*.swp
+__pycache__/
+.pytest_cache/
+.idea/
+.vscode/
+
+warehouse/target/
+crawler/data/interim/links/

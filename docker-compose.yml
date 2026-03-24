@@ -1,0 +1,46 @@
+services:
+  crawler:
+    build:
+      context: ./crawler
+    working_dir: /app
+    volumes:
+      - ./crawler/data:/app/data
+      - ./crawler/logs:/app/logs
+    command: ["python", "src/main.py", "scenic"]
+
+  mysql:
+    image: mysql:8.0
+    container_name: wenyu-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: wenyu_result
+      MYSQL_USER: wenyu
+      MYSQL_PASSWORD: wenyu123
+    ports:
+      - "3306:3306"
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_general_ci
+      - --default-authentication-plugin=mysql_native_password
+    volumes:
+      - ./warehouse/sql/mysql/01_wenyu_result.sql:/docker-entrypoint-initdb.d/01_wenyu_result.sql:ro
+      - mysql_data:/var/lib/mysql
+
+  metabase:
+    image: metabase/metabase:v0.53.7
+    container_name: wenyu-metabase
+    restart: unless-stopped
+    depends_on:
+      - mysql
+    ports:
+      - "3000:3000"
+    environment:
+      MB_DB_TYPE: h2
+      JAVA_TIMEZONE: Asia/Shanghai
+    volumes:
+      - metabase_data:/metabase-data
+
+volumes:
+  mysql_data:
+  metabase_data:
