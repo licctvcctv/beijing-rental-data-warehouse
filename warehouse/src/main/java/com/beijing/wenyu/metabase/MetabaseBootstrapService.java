@@ -22,6 +22,7 @@ public class MetabaseBootstrapService {
     public void bootstrap() throws InterruptedException {
         waitForMetabase();
         String sessionId = ensureAdmin();
+        warmUpSession(sessionId);
         int databaseId = ensureDatabase(sessionId);
         List<ResolvedCard> cards = ensureCards(sessionId, databaseId);
         int dashboardId = ensureDashboard(sessionId);
@@ -46,6 +47,21 @@ public class MetabaseBootstrapService {
             Thread.sleep(3000L);
         }
         throw new IllegalStateException("Metabase did not become ready in time.");
+    }
+
+    private void warmUpSession(String sessionId) throws InterruptedException {
+        for (int attempt = 1; attempt <= 3; attempt++) {
+            try {
+                client.request("GET", "/api/card", null, sessionId);
+                return;
+            } catch (IllegalStateException e) {
+                if (!e.getMessage().contains("HTTP 500") || attempt == 3) {
+                    throw e;
+                }
+                System.out.println("Metabase warm-up retry " + attempt + "/3: " + e.getMessage().substring(0, Math.min(e.getMessage().length(), 120)));
+                Thread.sleep(5000L);
+            }
+        }
     }
 
     private String ensureAdmin() {
