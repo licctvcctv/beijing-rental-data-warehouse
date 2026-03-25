@@ -13,15 +13,23 @@ public class LocalAdsLayerBuilder {
 
     public Map<String, LocalTable> build(Map<String, LocalTable> dwdTables, Map<String, LocalTable> dwsTables) {
         LinkedHashMap<String, LocalTable> tables = new LinkedHashMap<String, LocalTable>();
-        tables.put("ads_region_entertainment_count", buildRegionCount(dwsTables.get("dws_region_summary")));
-        tables.put("ads_movie_score_distribution", cloneAs("ads_movie_score_distribution", dwsTables.get("dws_movie_score_summary")));
-        tables.put("ads_show_price_top10", buildShowPriceTop10(dwsTables.get("dws_show_price_summary")));
-        tables.put("ads_show_status_ratio", buildShowStatusRatio(dwsTables.get("dws_show_status_summary")));
-        tables.put("ads_ktv_region_hotspot", buildKtvHotspot(dwsTables.get("dws_ktv_region_summary")));
-        tables.put("ads_ktv_cost_performance_top5", buildKtvPerformance(dwdTables.get("dwd_ktv_detail")));
-        tables.put("ads_sport_type_ratio_top5", buildSportRatio(dwsTables.get("dws_sport_type_summary")));
-        tables.put("ads_scenic_free_ratio", buildScenicRatio(dwdTables.get("dwd_scenic_detail")));
+        tables.put("ads_region_entertainment_count", buildRegionCount(requireTable(dwsTables, "dws_region_summary")));
+        tables.put("ads_movie_score_distribution", cloneAs("ads_movie_score_distribution", requireTable(dwsTables, "dws_movie_score_summary")));
+        tables.put("ads_show_price_top10", buildShowPriceTop10(requireTable(dwsTables, "dws_show_price_summary")));
+        tables.put("ads_show_status_ratio", buildShowStatusRatio(requireTable(dwsTables, "dws_show_status_summary")));
+        tables.put("ads_ktv_region_hotspot", buildKtvHotspot(requireTable(dwsTables, "dws_ktv_region_summary")));
+        tables.put("ads_ktv_cost_performance_top5", buildKtvPerformance(requireTable(dwdTables, "dwd_ktv_detail")));
+        tables.put("ads_sport_type_ratio_top5", buildSportRatio(requireTable(dwsTables, "dws_sport_type_summary")));
+        tables.put("ads_scenic_free_ratio", buildScenicRatio(requireTable(dwdTables, "dwd_scenic_detail")));
         return tables;
+    }
+
+    private LocalTable requireTable(Map<String, LocalTable> tables, String key) {
+        LocalTable table = tables.get(key);
+        if (table == null) {
+            throw new IllegalStateException("Missing required table: " + key);
+        }
+        return table;
     }
 
     private LocalTable buildRegionCount(LocalTable source) {

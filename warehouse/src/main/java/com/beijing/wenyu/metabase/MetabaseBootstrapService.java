@@ -40,7 +40,8 @@ public class MetabaseBootstrapService {
                 if ("ok".equals(JsonUtils.string(health.get("status")))) {
                     return;
                 }
-            } catch (Exception ignore) {
+            } catch (Exception e) {
+                System.out.println("Waiting for Metabase: " + e.getMessage());
             }
             Thread.sleep(3000L);
         }
@@ -85,10 +86,12 @@ public class MetabaseBootstrapService {
             if (config.getDbName().equals(JsonUtils.string(database.get("name")))) {
                 return JsonUtils.integer(database.get("id"), -1);
             }
-            String db = JsonUtils.string(details.get("db"));
-            String dbName = JsonUtils.string(details.get("dbname"));
-            if (config.getMysqlDatabase().equals(db) || config.getMysqlDatabase().equals(dbName)) {
-                return JsonUtils.integer(database.get("id"), -1);
+            if (details != null) {
+                String db = JsonUtils.string(details.get("db"));
+                String dbName = JsonUtils.string(details.get("dbname"));
+                if (config.getMysqlDatabase().equals(db) || config.getMysqlDatabase().equals(dbName)) {
+                    return JsonUtils.integer(database.get("id"), -1);
+                }
             }
         }
         System.out.println("Creating Metabase MySQL connection...");
@@ -274,13 +277,14 @@ public class MetabaseBootstrapService {
         try {
             outputStream = new FileOutputStream(markerFile, false);
             outputStream.write(content.getBytes(StandardCharsets.UTF_8));
+            outputStream.flush();
         } catch (IOException e) {
             throw new IllegalStateException("Unable to write Metabase marker: " + markerPath, e);
         } finally {
             if (outputStream != null) {
                 try {
                     outputStream.close();
-                } catch (IOException ignore) {
+                } catch (IOException ignored) {
                 }
             }
         }

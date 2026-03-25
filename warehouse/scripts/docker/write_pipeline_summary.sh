@@ -8,7 +8,7 @@ HIVE_SAMPLE_FILE="${OUTPUT_DIR}/ads_region_entertainment_count.tsv"
 
 mkdir -p "${OUTPUT_DIR}"
 
-mysql -h "${MYSQL_HOST}" -P "${MYSQL_PORT}" -u "${MYSQL_USER}" -p"${MYSQL_PASSWORD}" -D "${MYSQL_DB}" -N -B <<'SQL' > "${MYSQL_COUNTS_FILE}"
+mysql -h "${MYSQL_HOST}" -P "${MYSQL_PORT}" -u "${MYSQL_USER}" -p"${MYSQL_PASSWORD}" -D "${MYSQL_DB:?MYSQL_DB not set}" -N -B <<'SQL' > "${MYSQL_COUNTS_FILE}"
 SELECT 'ads_region_entertainment_count', COUNT(*) FROM ads_region_entertainment_count
 UNION ALL
 SELECT 'ads_movie_score_distribution', COUNT(*) FROM ads_movie_score_distribution

@@ -6,7 +6,10 @@ cd "$BASE_DIR"
 JAR_PATH="target/wenyu-warehouse-1.0-SNAPSHOT-jar-with-dependencies.jar"
 
 if [[ "${SKIP_MVN_PACKAGE:-false}" != "true" ]]; then
-  mvn -q -DskipTests -Dmaven.wagon.http.retryHandler.count=3 -Dmaven.wagon.httpconnectionManager.ttlSeconds=120 package
+  if ! mvn -q -DskipTests -Dmaven.wagon.http.retryHandler.count=3 -Dmaven.wagon.httpconnectionManager.ttlSeconds=120 package; then
+    echo "Maven build failed" >&2
+    exit 1
+  fi
 fi
 
 JAVA_CP="$JAR_PATH"

@@ -3,6 +3,7 @@ package com.beijing.wenyu.local;
 import com.beijing.wenyu.common.WarehouseConstants;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 public final class LocalValueUtils {
 
@@ -24,14 +25,22 @@ public final class LocalValueUtils {
         if (isNull(value)) {
             return 0D;
         }
-        return Double.parseDouble(value);
+        try {
+            return Double.parseDouble(value);
+        } catch (NumberFormatException e) {
+            return 0D;
+        }
     }
 
     public static long parseLong(String value) {
         if (isNull(value)) {
             return 0L;
         }
-        return Long.parseLong(value);
+        try {
+            return Long.parseLong(value);
+        } catch (NumberFormatException e) {
+            return 0L;
+        }
     }
 
     public static boolean isNull(String value) {
@@ -39,7 +48,7 @@ public final class LocalValueUtils {
     }
 
     public static String formatDecimal(double value, int scale) {
-        BigDecimal decimal = BigDecimal.valueOf(value).setScale(scale, BigDecimal.ROUND_HALF_UP);
+        BigDecimal decimal = BigDecimal.valueOf(value).setScale(scale, RoundingMode.HALF_UP);
         decimal = decimal.stripTrailingZeros();
         return decimal.scale() < 0 ? decimal.setScale(0).toPlainString() : decimal.toPlainString();
     }

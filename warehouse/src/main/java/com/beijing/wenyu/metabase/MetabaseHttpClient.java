@@ -41,7 +41,14 @@ public class MetabaseHttpClient {
 
             int statusCode = connection.getResponseCode();
             InputStream stream = statusCode >= 400 ? connection.getErrorStream() : connection.getInputStream();
-            String body = readBody(stream);
+            String body;
+            try {
+                body = readBody(stream);
+            } finally {
+                if (stream != null) {
+                    stream.close();
+                }
+            }
             if (statusCode >= 400) {
                 throw new IllegalStateException(method + " " + path + " failed: HTTP " + statusCode + " " + body);
             }

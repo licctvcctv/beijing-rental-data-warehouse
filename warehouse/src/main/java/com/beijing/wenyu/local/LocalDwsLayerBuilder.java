@@ -14,26 +14,34 @@ public class LocalDwsLayerBuilder {
     public Map<String, LocalTable> build(Map<String, LocalTable> dwdTables) {
         LinkedHashMap<String, LocalTable> tables = new LinkedHashMap<String, LocalTable>();
         tables.put("dws_region_summary", buildRegionSummary(dwdTables));
-        tables.put("dws_movie_score_summary", buildMovieScoreSummary(dwdTables.get("dwd_movie_detail")));
-        tables.put("dws_show_status_summary", buildShowStatusSummary(dwdTables.get("dwd_show_detail")));
-        tables.put("dws_show_price_summary", buildShowPriceSummary(dwdTables.get("dwd_show_detail")));
-        tables.put("dws_ktv_region_summary", buildKtvRegionSummary(dwdTables.get("dwd_ktv_detail")));
-        tables.put("dws_sport_type_summary", buildSportTypeSummary(dwdTables.get("dwd_sport_detail")));
-        tables.put("dws_scenic_visit_time_summary", buildScenicVisitSummary(dwdTables.get("dwd_scenic_detail")));
+        tables.put("dws_movie_score_summary", buildMovieScoreSummary(requireTable(dwdTables, "dwd_movie_detail")));
+        tables.put("dws_show_status_summary", buildShowStatusSummary(requireTable(dwdTables, "dwd_show_detail")));
+        tables.put("dws_show_price_summary", buildShowPriceSummary(requireTable(dwdTables, "dwd_show_detail")));
+        tables.put("dws_ktv_region_summary", buildKtvRegionSummary(requireTable(dwdTables, "dwd_ktv_detail")));
+        tables.put("dws_sport_type_summary", buildSportTypeSummary(requireTable(dwdTables, "dwd_sport_detail")));
+        tables.put("dws_scenic_visit_time_summary", buildScenicVisitSummary(requireTable(dwdTables, "dwd_scenic_detail")));
         return tables;
+    }
+
+    private LocalTable requireTable(Map<String, LocalTable> tables, String key) {
+        LocalTable table = tables.get(key);
+        if (table == null) {
+            throw new IllegalStateException("Missing required DWD table: " + key);
+        }
+        return table;
     }
 
     private LocalTable buildRegionSummary(Map<String, LocalTable> dwdTables) {
         LocalTable table = new LocalTable("dws_region_summary", Arrays.asList("region", "category", "total_count"));
-        appendRegionRows(table, countByField(dwdTables.get("dwd_scenic_detail"), "region_std"), "scenic");
-        appendRegionRows(table, countByField(dwdTables.get("dwd_show_detail"), "region_std"), "show");
-        appendRegionRows(table, countByField(dwdTables.get("dwd_ktv_detail"), "region_std"), "ktv");
+        appendRegionRows(table, countByField(requireTable(dwdTables, "dwd_scenic_detail"), "region_std"), "scenic");
+        appendRegionRows(table, countByField(requireTable(dwdTables, "dwd_show_detail"), "region_std"), "show");
+        appendRegionRows(table, countByField(requireTable(dwdTables, "dwd_ktv_detail"), "region_std"), "ktv");
         LinkedHashMap<String, String> movie = new LinkedHashMap<String, String>();
         movie.put("region", "北京市");
         movie.put("category", "movie");
-        movie.put("total_count", String.valueOf(dwdTables.get("dwd_movie_detail").getRows().size()));
+        movie.put("total_count", String.valueOf(requireTable(dwdTables, "dwd_movie_detail").getRows().size()));
         table.addRow(movie);
-        appendRegionRows(table, countByField(dwdTables.get("dwd_sport_detail"), "region_std"), "sport");
+        appendRegionRows(table, countByField(requireTable(dwdTables, "dwd_sport_detail"), "region_std"), "sport");
         return table;
     }
 

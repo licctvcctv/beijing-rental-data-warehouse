@@ -91,10 +91,16 @@ DROP TABLE IF EXISTS ads_scenic_free_ratio;
 CREATE TABLE ads_scenic_free_ratio
 ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
 STORED AS TEXTFILE AS
-SELECT '免费景点' AS scenic_type, SUM(CASE WHEN price_min = 0 THEN 1 ELSE 0 END) AS scenic_count,
-       ROUND(SUM(CASE WHEN price_min = 0 THEN 1 ELSE 0 END) / COUNT(1), 4) AS scenic_ratio
-FROM wenyu_dwd.dwd_scenic_detail
-UNION ALL
-SELECT '收费景点' AS scenic_type, SUM(CASE WHEN price_min > 0 THEN 1 ELSE 0 END) AS scenic_count,
-       ROUND(SUM(CASE WHEN price_min > 0 THEN 1 ELSE 0 END) / COUNT(1), 4) AS scenic_ratio
-FROM wenyu_dwd.dwd_scenic_detail;
+SELECT scenic_type, scenic_count, ROUND(scenic_count / total, 4) AS scenic_ratio
+FROM (
+    SELECT '免费景点' AS scenic_type,
+           SUM(free_count) AS scenic_count,
+           SUM(scenic_count) AS total
+    FROM wenyu_dws.dws_scenic_visit_time_summary
+    UNION ALL
+    SELECT '收费景点' AS scenic_type,
+           SUM(scenic_count) - SUM(free_count) AS scenic_count,
+           SUM(scenic_count) AS total
+    FROM wenyu_dws.dws_scenic_visit_time_summary
+) t
+WHERE total > 0;

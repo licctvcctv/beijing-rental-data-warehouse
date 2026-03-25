@@ -10,12 +10,20 @@ public class LocalDwdLayerBuilder {
 
     public Map<String, LocalTable> build(Map<String, LocalTable> odsTables) {
         LinkedHashMap<String, LocalTable> tables = new LinkedHashMap<String, LocalTable>();
-        tables.put("dwd_scenic_detail", buildScenic(odsTables.get("ods_scenic_info")));
-        tables.put("dwd_show_detail", buildShow(odsTables.get("ods_show_info")));
-        tables.put("dwd_ktv_detail", buildKtv(odsTables.get("ods_ktv_info")));
-        tables.put("dwd_movie_detail", buildMovie(odsTables.get("ods_movie_info")));
-        tables.put("dwd_sport_detail", buildSport(odsTables.get("ods_sport_info")));
+        tables.put("dwd_scenic_detail", buildScenic(requireTable(odsTables, "ods_scenic_info")));
+        tables.put("dwd_show_detail", buildShow(requireTable(odsTables, "ods_show_info")));
+        tables.put("dwd_ktv_detail", buildKtv(requireTable(odsTables, "ods_ktv_info")));
+        tables.put("dwd_movie_detail", buildMovie(requireTable(odsTables, "ods_movie_info")));
+        tables.put("dwd_sport_detail", buildSport(requireTable(odsTables, "ods_sport_info")));
         return tables;
+    }
+
+    private LocalTable requireTable(Map<String, LocalTable> tables, String key) {
+        LocalTable table = tables.get(key);
+        if (table == null) {
+            throw new IllegalStateException("Missing required ODS table: " + key);
+        }
+        return table;
     }
 
     private LocalTable buildScenic(LocalTable source) {
