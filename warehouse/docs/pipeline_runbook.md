@@ -35,9 +35,8 @@
 - 自动执行 Java HDFS 上传与 Java MapReduce 清洗
 - 自动执行 Hive ODS / DWD / DWS / ADS 分层
 - 自动执行 Sqoop 导出到 `wenyu_result`
+- 自动启动 Metabase，并自动完成管理员、数据源、问题和仪表板初始化
 - 自动生成链路摘要文件，便于答辩时展示结果
-
-BI 容器不再默认启动，如需演示 BI，再显式开启 `bi` profile。
 
 ## 2. 目录说明
 
@@ -106,32 +105,32 @@ docker compose up --build -d
 - `hive-metastore-db`：Hive 元数据库
 - `mysql`：Sqoop 导出目标库 `wenyu_result`
 - `warehouse-platform`：HDFS / YARN / Hive / Sqoop / Java MapReduce 一体化执行容器
+- `metabase`：BI 展示面板
+- `metabase-init`：Metabase 自动初始化任务，完成后会退出并显示 `Exited (0)`
 
 执行完成后可直接检查：
 
 - HDFS NameNode：`http://localhost:9870`
 - YARN ResourceManager：`http://localhost:8088`
 - HiveServer2：`localhost:10000`
-- MySQL：`localhost:3306`
+- Metabase：`http://localhost:3000`
+
+说明：
+
+- MySQL 不再对宿主机暴露 `3306` 端口，避免和他人电脑上的本地 MySQL 冲突。
+- 容器内部的 Hive、Sqoop、Metabase 仍会通过 Docker 网络访问 `mysql:3306`，不影响链路执行。
 
 链路产物会输出到：
 
 - `warehouse/target/docker-hadoop-output/summary.txt`
 - `warehouse/target/docker-hadoop-output/mysql_counts.tsv`
 - `warehouse/target/docker-hadoop-output/ads_region_entertainment_count.tsv`
+- `warehouse/target/docker-hadoop-output/metabase.success`
 
-如需连带启动 BI，再执行：
+其中：
 
-```bash
-docker compose --profile bi up --build -d
-```
-
-此时会额外启动：
-
-- `metabase`
-- `metabase-init`
-
-并自动完成 Metabase 初始化，无需浏览器手工配置。
+- `pipeline.success` 表示离线链路执行成功
+- `metabase.success` 中会记录当前看板地址 `dashboard_url=...`
 
 ### 4.1 原始数据上传
 
@@ -194,20 +193,18 @@ source warehouse/sql/mysql/01_wenyu_result.sql;
 bash scripts/run_sqoop_export.sh
 ```
 
-## 5. BI 面板启动
+## 5. BI 面板访问
 
-BI 作为可选层，不再默认随离线数仓主链路一起启动。
-
-需要 BI 时，在项目根目录执行：
+BI 已经是默认核心功能，执行下面这条命令时会随离线链路一起启动并自动初始化：
 
 ```bash
-docker compose --profile bi up --build -d
+docker compose up --build -d
 ```
 
 访问地址：
 
-- Metabase：`http://localhost:3000`
-- MySQL：`localhost:3306`
+- Metabase 登录页：`http://localhost:3000`
+- 实际仪表板地址：以 `warehouse/target/docker-hadoop-output/metabase.success` 中的 `dashboard_url=` 为准
 
 容器会自动完成：
 
@@ -215,6 +212,16 @@ docker compose --profile bi up --build -d
 - 连接 MySQL 数据源 `wenyu_result`
 - 自动创建预置问题
 - 自动创建 `北京娱乐方式离线数仓 BI 看板`
+
+推荐演示方式：
+
+- 默认管理界面：直接打开 `dashboard_url`
+- 推荐全屏展示：在 `dashboard_url` 后追加 `#fullscreen`
+
+说明：
+
+- Metabase 默认管理界面会保留一层导航壳，左右会有少量留白。
+- 需要答辩展示时，优先使用 `#fullscreen` 模式，看板会更接近全屏展示。
 
 详细说明见：`warehouse/docs/metabase_dashboard_guide.md`
 

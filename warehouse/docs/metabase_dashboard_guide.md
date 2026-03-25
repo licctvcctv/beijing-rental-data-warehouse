@@ -2,35 +2,35 @@
 
 ## 1. 启动方式
 
-只启动 BI 面板：
+项目已经把 Metabase 作为默认核心能力接入，推荐直接在项目根目录执行：
 
 ```bash
-cd warehouse
-bash scripts/run_bi_stack.sh
+docker compose up --build -d
 ```
 
-执行完整离线链路并启动 BI 面板：
+这条命令会自动完成：
 
-```bash
-cd warehouse
-bash scripts/run_all_with_bi.sh
-```
-
-这两个脚本都会自动：
-- 启动 `mysql + metabase`
+- 启动 `warehouse-platform + mysql + metabase + metabase-init`
+- 执行完整离线数仓链路
 - 初始化 Metabase 管理员账号
 - 自动连接 `wenyu_result` 数据库
 - 自动创建问题和预置仪表板
 
 ## 2. 访问地址
 
-- Metabase：`http://localhost:3000`
-- MySQL：`localhost:3306`
+- Metabase 登录页：`http://localhost:3000`
+- 仪表板真实地址：查看 `warehouse/target/docker-hadoop-output/metabase.success` 中的 `dashboard_url=...`
+- 推荐展示地址：在 `dashboard_url` 后追加 `#fullscreen`
 
 默认数据库：
 - database: `wenyu_result`
 - username: `wenyu`
 - password: `wenyu123`
+
+说明：
+
+- MySQL 不对宿主机暴露 `3306` 端口，避免与本机已有数据库冲突。
+- Metabase、Hive、Sqoop 会在 Docker 内部通过 `mysql:3306` 访问结果库。
 
 ## 3. 自动初始化结果
 
@@ -52,6 +52,18 @@ bash scripts/run_all_with_bi.sh
 
 如果你是在本机外访问 Metabase 容器，UI 地址仍是 `localhost:3000`，但 Metabase 容器内部连接 MySQL 时 Host 仍使用 `mysql`。
 
+启动成功后，还会在以下文件中写入初始化结果：
+
+- `warehouse/target/docker-hadoop-output/metabase.success`
+
+示例内容：
+
+```text
+metabase_status=SUCCESS
+dashboard_url=http://localhost:3000/dashboard/2
+admin_email=admin@wenyu.local
+```
+
 ## 4. 推荐仪表板图表
 
 | 图表名 | 数据表 | 推荐图形 | 维度/指标 |
@@ -69,5 +81,6 @@ bash scripts/run_all_with_bi.sh
 
 - `docker-compose.yml` 已提供 MySQL + Metabase 的 BI 面板运行环境。
 - `warehouse/sql/mysql/01_wenyu_result.sql` 会在 MySQL 容器首次初始化时自动建库建表。
-- `warehouse/scripts/init_metabase_dashboard.py` 会通过 Metabase API 自动完成管理员、数据源、问题和仪表板初始化。
+- `warehouse/src/main/java/com/beijing/wenyu/runner/MetabaseBootstrapRunner.java` 会通过 Metabase API 自动完成管理员、数据源、问题和仪表板初始化。
 - 你仍需先将 Hive ADS 结果通过 Sqoop 导入到 MySQL，Metabase 才能展示真实数据。
+- 如果感觉默认管理界面左右留白较多，这是 Metabase 后台壳层的正常表现；答辩或投屏时建议直接使用 `dashboard_url#fullscreen`。
