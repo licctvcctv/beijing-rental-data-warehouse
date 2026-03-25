@@ -1,0 +1,45 @@
+FROM maven:3.9.9-eclipse-temurin-8 AS builder
+
+WORKDIR /workspace/warehouse
+COPY warehouse/pom.xml ./
+COPY warehouse/src ./src
+RUN mvn -q -DskipTests dependency:go-offline
+RUN mvn -q -DskipTests package
+
+FROM mtsrus/hadoop:hadoop3.3.6-hive3.1.3
+
+ARG SQOOP_VERSION=1.4.7
+ARG MYSQL_CONNECTOR_VERSION=8.4.0
+
+COPY --from=builder /opt/java/openjdk /opt/java/openjdk
+
+ENV JAVA_HOME=/opt/java/openjdk
+ENV SQOOP_HOME=/opt/sqoop
+ENV PATH=/opt/java/openjdk/bin:/opt/sqoop/bin:$PATH
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends default-mysql-client \
+    && rm -rf /var/lib/apt/lists/* \
+    && curl -fsSL "https://archive.apache.org/dist/sqoop/${SQOOP_VERSION}/sqoop-${SQOOP_VERSION}.bin__hadoop-2.6.0.tar.gz" -o /tmp/sqoop.tar.gz \
+    && tar -xzf /tmp/sqoop.tar.gz -C /opt \
+    && ln -s /opt/sqoop-${SQOOP_VERSION}.bin__hadoop-2.6.0 /opt/sqoop \
+    && curl -fsSL "https://repo1.maven.org/maven2/com/mysql/mysql-connector-j/${MYSQL_CONNECTOR_VERSION}/mysql-connector-j-${MYSQL_CONNECTOR_VERSION}.jar" -o "/opt/sqoop/lib/mysql-connector-j-${MYSQL_CONNECTOR_VERSION}.jar" \
+    && curl -fsSL "https://repo1.maven.org/maven2/commons-lang/commons-lang/2.6/commons-lang-2.6.jar" -o "/opt/sqoop/lib/commons-lang-2.6.jar" \
+    && rm -f /tmp/sqoop.tar.gz
+
+WORKDIR /workspace
+
+COPY warehouse/sql /workspace/warehouse/sql
+COPY warehouse/scripts /workspace/warehouse/scripts
+COPY warehouse/src/main/resources /workspace/warehouse/src/main/resources
+COPY crawler/data/export /workspace/crawler/data/export
+COPY warehouse/docker/hadoop-conf /var/hadoop/conf
+COPY warehouse/docker/hive-conf /var/hive/conf
+COPY warehouse/docker/scripts/populate-hdfs.sh /scripts/populate-hdfs.sh
+COPY --from=builder /workspace/warehouse/target/wenyu-warehouse-1.0-SNAPSHOT-jar-with-dependencies.jar /workspace/warehouse/target/wenyu-warehouse-1.0-SNAPSHOT-jar-with-dependencies.jar
+
+RUN chmod +x /workspace/warehouse/scripts/*.sh \
+    && chmod +x /workspace/warehouse/scripts/docker/*.sh \
+    && chmod +x /scripts/populate-hdfs.sh
+
+ENTRYPOINT ["/workspace/warehouse/scripts/docker/start_bigdata_stack.sh"]

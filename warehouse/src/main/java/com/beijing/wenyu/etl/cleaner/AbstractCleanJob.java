@@ -1,5 +1,7 @@
 package com.beijing.wenyu.etl.cleaner;
 
+import com.beijing.wenyu.common.HadoopConfigurationFactory;
+import com.beijing.wenyu.common.WarehouseConfig;
 import com.beijing.wenyu.common.WarehouseConstants;
 import com.beijing.wenyu.etl.config.CategorySchema;
 import com.beijing.wenyu.etl.model.CleanRecord;
@@ -32,7 +34,8 @@ public abstract class AbstractCleanJob {
         if (args.length < 2) {
             throw new IllegalArgumentException("Usage: <inputPath> <outputPath>");
         }
-        Configuration conf = new Configuration();
+        WarehouseConfig warehouseConfig = new WarehouseConfig();
+        Configuration conf = HadoopConfigurationFactory.createConfiguration(warehouseConfig);
         conf.set("warehouse.category", category());
         conf.set("warehouse.job.class", getClass().getName());
         Job job = Job.getInstance(conf, getClass().getSimpleName());

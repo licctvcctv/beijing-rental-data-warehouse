@@ -1,5 +1,6 @@
 package com.beijing.wenyu.hdfs;
 
+import com.beijing.wenyu.common.HadoopConfigurationFactory;
 import com.beijing.wenyu.common.WarehouseConfig;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
@@ -19,10 +20,7 @@ public class HdfsClient implements Closeable {
 
     public HdfsClient(WarehouseConfig config) {
         try {
-            Configuration configuration = new Configuration();
-            configuration.set("fs.defaultFS", config.get("hdfs.uri"));
-            configuration.set("dfs.client.use.datanode.hostname", "true");
-            configuration.set("dfs.replication", "1");
+            Configuration configuration = HadoopConfigurationFactory.createConfiguration(config);
             this.fileSystem = FileSystem.get(new URI(config.get("hdfs.uri")), configuration, config.get("hdfs.user"));
         } catch (IOException | InterruptedException | URISyntaxException e) {
             throw new IllegalStateException("Failed to initialize HDFS client", e);

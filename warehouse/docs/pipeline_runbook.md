@@ -10,6 +10,35 @@
 - `crawler/` 只负责原始采集与 CSV 导出
 - `warehouse/` 负责上传、清洗、分层、导出与交付说明
 
+## 1.1 当前新增的本地离线数仓链路
+
+为了让项目在没有 Hadoop / Hive / Sqoop 环境时也能完整演示“离线数仓全流程”，现在额外补充了一条 **Java 本地离线链路**：
+
+`原始 CSV -> Java 清洗 -> 本地 ODS -> 本地 DWD -> 本地 DWS -> 本地 ADS -> MySQL 导入 SQL`
+
+说明：
+
+- 这条链路只用于本机演示和联调，不替代正式的 Hadoop 离线链路。
+- 这条链路同样只使用 Java 构建分层结果，Python 不参与 `warehouse` 主流程。
+- 产物会落到 `warehouse/target/local-offline-output/`，便于答辩时直接展示每一层文件。
+
+## 1.2 Docker 一键部署链路
+
+项目根目录现在支持直接使用 Docker 完成以下自动化步骤：
+
+`现成原始 CSV -> HDFS -> Java MapReduce -> Hive ODS/DWD/DWS/ADS -> Sqoop -> MySQL`
+
+自动完成的内容包括：
+
+- 不运行爬虫，直接使用 `crawler/data/export/` 下已有原始 CSV
+- 自动启动 Hadoop、HDFS、YARN、Hive、Sqoop 运行环境
+- 自动执行 Java HDFS 上传与 Java MapReduce 清洗
+- 自动执行 Hive ODS / DWD / DWS / ADS 分层
+- 自动执行 Sqoop 导出到 `wenyu_result`
+- 自动生成链路摘要文件，便于答辩时展示结果
+
+BI 容器不再默认启动，如需演示 BI，再显式开启 `bi` profile。
+
 ## 2. 目录说明
 
 - `src/main/java/com/beijing/wenyu/hdfs`：HDFS 上传代码
@@ -30,6 +59,79 @@
 3. 根据实际环境修改 `src/main/resources/warehouse.properties` 中的 HDFS、MySQL 配置。
 
 ## 4. 执行步骤
+
+### 4.0 无 Hadoop 环境时，先跑本地离线数仓链路
+
+Linux / Git Bash:
+
+```bash
+cd warehouse
+bash scripts/run_local_offline.sh
+```
+
+Windows PowerShell:
+
+```powershell
+cd warehouse
+powershell -ExecutionPolicy Bypass -File .\scripts\run_local_offline.ps1
+```
+
+执行完成后，会生成：
+
+- `target/local-offline-output/raw/`：原始 CSV 快照
+- `target/local-offline-output/clean/`：Java 清洗后的分主题明细
+- `target/local-offline-output/ods/`：ODS 层 CSV
+- `target/local-offline-output/dwd/`：DWD 层 CSV
+- `target/local-offline-output/dws/`：DWS 层 CSV
+- `target/local-offline-output/ads/`：ADS 层 CSV
+- `target/local-offline-output/mysql/ads_seed.sql`：导入 MySQL 的结果 SQL
+- `target/local-offline-output/summary.txt`：各层记录数摘要
+
+这一步适合：
+
+- 本机先验证“全链路是否齐”
+- 没有 Hadoop 环境时先准备答辩展示材料
+- 先确认清洗、分层、汇总指标是否合理，再切换到 Hadoop / Hive 正式链路
+
+### 4.0.1 Docker 一键启动
+
+在项目根目录执行：
+
+```bash
+docker compose up --build -d
+```
+
+默认会启动以下核心服务：
+
+- `hive-metastore-db`：Hive 元数据库
+- `mysql`：Sqoop 导出目标库 `wenyu_result`
+- `warehouse-platform`：HDFS / YARN / Hive / Sqoop / Java MapReduce 一体化执行容器
+
+执行完成后可直接检查：
+
+- HDFS NameNode：`http://localhost:9870`
+- YARN ResourceManager：`http://localhost:8088`
+- HiveServer2：`localhost:10000`
+- MySQL：`localhost:3306`
+
+链路产物会输出到：
+
+- `warehouse/target/docker-hadoop-output/summary.txt`
+- `warehouse/target/docker-hadoop-output/mysql_counts.tsv`
+- `warehouse/target/docker-hadoop-output/ads_region_entertainment_count.tsv`
+
+如需连带启动 BI，再执行：
+
+```bash
+docker compose --profile bi up --build -d
+```
+
+此时会额外启动：
+
+- `metabase`
+- `metabase-init`
+
+并自动完成 Metabase 初始化，无需浏览器手工配置。
 
 ### 4.1 原始数据上传
 
@@ -94,20 +196,12 @@ bash scripts/run_sqoop_export.sh
 
 ## 5. BI 面板启动
 
-项目根目录已补充 `docker-compose.yml` 中的 `mysql + metabase` 服务，可以作为 BI 面板运行环境。
+BI 作为可选层，不再默认随离线数仓主链路一起启动。
 
-只启动 BI：
-
-```bash
-cd warehouse
-bash scripts/run_bi_stack.sh
-```
-
-执行完整离线链路并启动 BI：
+需要 BI 时，在项目根目录执行：
 
 ```bash
-cd warehouse
-bash scripts/run_all_with_bi.sh
+docker compose --profile bi up --build -d
 ```
 
 访问地址：
@@ -115,7 +209,7 @@ bash scripts/run_all_with_bi.sh
 - Metabase：`http://localhost:3000`
 - MySQL：`localhost:3306`
 
-脚本会自动完成：
+容器会自动完成：
 
 - 创建 Metabase 管理员账号：`admin@wenyu.local / Admin@123456`
 - 连接 MySQL 数据源 `wenyu_result`

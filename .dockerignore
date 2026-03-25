@@ -1,0 +1,7 @@
+.git
+analysis
+docs
+warehouse/target
+crawler/logs
+**/__pycache__
+**/*.pyc

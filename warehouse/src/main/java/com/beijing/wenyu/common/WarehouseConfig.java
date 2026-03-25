@@ -2,6 +2,7 @@ package com.beijing.wenyu.common;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Locale;
 import java.util.Properties;
 
 public class WarehouseConfig {
@@ -21,7 +22,7 @@ public class WarehouseConfig {
     }
 
     public String get(String key) {
-        String value = properties.getProperty(key);
+        String value = resolve(key);
         if (value == null || value.trim().isEmpty()) {
             throw new IllegalArgumentException("Missing config key: " + key);
         }
@@ -29,7 +30,20 @@ public class WarehouseConfig {
     }
 
     public String getOrDefault(String key, String defaultValue) {
-        String value = properties.getProperty(key);
+        String value = resolve(key);
         return value == null || value.trim().isEmpty() ? defaultValue : value.trim();
+    }
+
+    private String resolve(String key) {
+        String systemValue = System.getProperty(key);
+        if (systemValue != null && !systemValue.trim().isEmpty()) {
+            return systemValue;
+        }
+        String envKey = "WAREHOUSE_" + key.toUpperCase(Locale.ROOT).replace('.', '_');
+        String envValue = System.getenv(envKey);
+        if (envValue != null && !envValue.trim().isEmpty()) {
+            return envValue;
+        }
+        return properties.getProperty(key);
     }
 }

@@ -1,12 +1,19 @@
 services:
-  crawler:
-    build:
-      context: ./crawler
-    working_dir: /app
+  hive-metastore-db:
+    image: postgres:15
+    container_name: wenyu-hive-metastore-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: metastore
+      POSTGRES_USER: hive
+      POSTGRES_PASSWORD: hive
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hive -d metastore"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
     volumes:
-      - ./crawler/data:/app/data
-      - ./crawler/logs:/app/logs
-    command: ["python", "src/main.py", "scenic"]
+      - hive_metastore_db:/var/lib/postgresql/data
 
   mysql:
     image: mysql:8.0
@@ -23,24 +30,107 @@ services:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_general_ci
       - --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-proot123", "--silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
     volumes:
-      - ./warehouse/sql/mysql/01_wenyu_result.sql:/docker-entrypoint-initdb.d/01_wenyu_result.sql:ro
       - mysql_data:/var/lib/mysql
+      - ./warehouse/sql/mysql/01_wenyu_result.sql:/docker-entrypoint-initdb.d/01_wenyu_result.sql:ro
+
+  warehouse-platform:
+    build:
+      context: .
+      dockerfile: warehouse/Dockerfile.bigdata
+    container_name: wenyu-warehouse-platform
+    hostname: warehouse-platform
+    restart: "no"
+    depends_on:
+      hive-metastore-db:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    environment:
+      WAIT_TIMEOUT_SECONDS: 300
+      WITH_HIVE_METASTORE_SERVER: "true"
+      WITH_HIVE_SERVER: "true"
+      HIVE_METASTORE_DB_URL: jdbc:postgresql://hive-metastore-db:5432/metastore
+      HIVE_METASTORE_DB_DRIVER: org.postgresql.Driver
+      HIVE_METASTORE_DB_USER: hive
+      HIVE_METASTORE_DB_PASSWORD: hive
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DB: wenyu_result
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root123
+    ports:
+      - "9870:9870"
+      - "8088:8088"
+      - "10000:10000"
+    volumes:
+      - hadoop_data:/var/hadoop/data
+      - ./warehouse/target/docker-hadoop-output:/workspace/warehouse/target/docker-hadoop-output
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /workspace/warehouse/target/docker-hadoop-output/pipeline.success"]
+      interval: 30s
+      timeout: 5s
+      retries: 80
+      start_period: 20m
 
   metabase:
     image: metabase/metabase:v0.53.7
     container_name: wenyu-metabase
     restart: unless-stopped
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
     ports:
       - "3000:3000"
     environment:
       MB_DB_TYPE: h2
+      MB_DB_FILE: /metabase-data/metabase
       JAVA_TIMEZONE: Asia/Shanghai
     volumes:
       - metabase_data:/metabase-data
 
+  metabase-init:
+    build:
+      context: .
+      dockerfile: warehouse/Dockerfile.bigdata
+    container_name: wenyu-metabase-init
+    restart: "no"
+    depends_on:
+      warehouse-platform:
+        condition: service_healthy
+      metabase:
+        condition: service_started
+    environment:
+      METABASE_URL: http://metabase:3000
+      METABASE_PUBLIC_URL: http://localhost:3000
+      METABASE_ADMIN_EMAIL: admin@wenyu.local
+      METABASE_ADMIN_PASSWORD: Admin@123456
+      METABASE_ADMIN_FIRST_NAME: Wenyu
+      METABASE_ADMIN_LAST_NAME: Admin
+      METABASE_DB_NAME: Wenyu MySQL
+      METABASE_DASHBOARD_NAME: 北京娱乐方式离线数仓 BI 看板
+      METABASE_MYSQL_HOST: mysql
+      METABASE_MYSQL_PORT: 3306
+      METABASE_MYSQL_DATABASE: wenyu_result
+      METABASE_MYSQL_USER: wenyu
+      METABASE_MYSQL_PASSWORD: wenyu123
+      METABASE_WAIT_TIMEOUT_SECONDS: 300
+      METABASE_BOOTSTRAP_MARKER_PATH: /workspace/warehouse/target/docker-hadoop-output/metabase.success
+    entrypoint:
+      - java
+      - -cp
+      - /workspace/warehouse/target/wenyu-warehouse-1.0-SNAPSHOT-jar-with-dependencies.jar
+      - com.beijing.wenyu.runner.MetabaseBootstrapRunner
+    volumes:
+      - ./warehouse/target/docker-hadoop-output:/workspace/warehouse/target/docker-hadoop-output
+
 volumes:
+  hadoop_data:
+  hive_metastore_db:
   mysql_data:
   metabase_data:
