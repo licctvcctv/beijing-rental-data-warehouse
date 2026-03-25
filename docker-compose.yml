@@ -24,8 +24,6 @@ services:
       MYSQL_DATABASE: wenyu_result
       MYSQL_USER: wenyu
       MYSQL_PASSWORD: wenyu123
-    ports:
-      - "3306:3306"
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_general_ci
