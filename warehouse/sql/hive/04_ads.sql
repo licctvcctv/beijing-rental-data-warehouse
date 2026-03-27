@@ -1,106 +1,73 @@
-USE wenyu_ads;
+USE rental_ads;
 
-DROP TABLE IF EXISTS ads_region_entertainment_count;
-CREATE TABLE ads_region_entertainment_count
+-- 1. 各行政区平均租金（柱状图）
+DROP TABLE IF EXISTS ads_xzq_avg_rent;
+CREATE TABLE ads_xzq_avg_rent
 ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
 STORED AS TEXTFILE AS
-SELECT
-    CASE WHEN region IS NULL OR TRIM(region) = '' THEN '未知' ELSE region END AS region,
-    SUM(total_count) AS entertainment_count
-FROM wenyu_dws.dws_region_summary
-GROUP BY CASE WHEN region IS NULL OR TRIM(region) = '' THEN '未知' ELSE region END;
+SELECT xzq, pj_zj, fysl, max_zj, min_zj
+FROM rental_dws.dws_fy_xzq_zj;
 
-DROP TABLE IF EXISTS ads_movie_score_distribution;
-CREATE TABLE ads_movie_score_distribution
+-- 2. 租金热力图（商圈维度）
+DROP TABLE IF EXISTS ads_fy_heatmap;
+CREATE TABLE ads_fy_heatmap
 ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
 STORED AS TEXTFILE AS
-SELECT
-    CASE WHEN score_level IS NULL OR TRIM(score_level) = '' THEN '未分级' ELSE score_level END AS score_level,
-    movie_count,
-    avg_score
-FROM wenyu_dws.dws_movie_score_summary;
+SELECT sq, xzq, pj_zj, center_jd, center_wd, fysl
+FROM rental_dws.dws_fy_sq_summary;
 
-DROP TABLE IF EXISTS ads_show_price_top10;
-CREATE TABLE ads_show_price_top10
+-- 3. 商圈房源数量 TOP10（折线图）
+DROP TABLE IF EXISTS ads_sq_top10;
+CREATE TABLE ads_sq_top10
 ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
 STORED AS TEXTFILE AS
-SELECT
-    name,
-    venue,
-    CASE WHEN region_std IS NULL OR TRIM(region_std) = '' THEN '北京市' ELSE region_std END AS region,
-    price_max,
-    price_min,
-    CASE WHEN status_std IS NULL OR TRIM(status_std) = '' THEN '待定' ELSE status_std END AS status_std,
-    attention_num
-FROM wenyu_dws.dws_show_price_summary
-ORDER BY price_max DESC, attention_num DESC
+SELECT sq, xzq, fysl, pj_zj
+FROM rental_dws.dws_fy_sq_summary
+ORDER BY fysl DESC
 LIMIT 10;
 
-DROP TABLE IF EXISTS ads_show_status_ratio;
-CREATE TABLE ads_show_status_ratio
+-- 4. 房源类型占比（饼图）
+DROP TABLE IF EXISTS ads_fy_type_ratio;
+CREATE TABLE ads_fy_type_ratio
 ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
 STORED AS TEXTFILE AS
 SELECT
-       CASE WHEN status_std IS NULL OR TRIM(status_std) = '' THEN '待定' ELSE status_std END AS status_std,
-       show_count,
-       ROUND(show_count / SUM(show_count) OVER (), 4) AS status_ratio
-FROM wenyu_dws.dws_show_status_summary;
+    fy_type,
+    fysl,
+    ROUND(fysl / SUM(fysl) OVER (), 4) AS type_ratio,
+    pj_zj,
+    pj_mj
+FROM rental_dws.dws_fy_type_summary;
 
-DROP TABLE IF EXISTS ads_ktv_region_hotspot;
-CREATE TABLE ads_ktv_region_hotspot
+-- 5. 租金单价与面积散点（散点图数据来自DWD明细）
+DROP TABLE IF EXISTS ads_price_area_scatter;
+CREATE TABLE ads_price_area_scatter
 ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
 STORED AS TEXTFILE AS
-SELECT
-    CASE WHEN region_std IS NULL OR TRIM(region_std) = '' THEN '未知' ELSE region_std END AS region,
-    ktv_count,
-    avg_cost,
-    avg_score
-FROM wenyu_dws.dws_ktv_region_summary
-ORDER BY ktv_count DESC, avg_score DESC;
+SELECT fy_id, xzq, unit_dj, jzmj, month_zj
+FROM rental_dwd.dwd_fy_mx
+WHERE jzmj > 0 AND unit_dj > 0;
 
-DROP TABLE IF EXISTS ads_ktv_cost_performance_top5;
-CREATE TABLE ads_ktv_cost_performance_top5
+-- 6. 地铁房 vs 非地铁房租金对比（分组柱状图）
+DROP TABLE IF EXISTS ads_metro_rent_compare;
+CREATE TABLE ads_metro_rent_compare
 ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
 STORED AS TEXTFILE AS
-SELECT
-    name,
-    CASE WHEN region_std IS NULL OR TRIM(region_std) = '' THEN '未知' ELSE region_std END AS region,
-    avg_cost,
-    overall_score,
-    cost_performance,
-    popularity_num
-FROM wenyu_dwd.dwd_ktv_detail
-WHERE avg_cost > 0
-ORDER BY cost_performance DESC, popularity_num DESC
-LIMIT 5;
+SELECT xzq, is_dt, fysl, pj_zj
+FROM rental_dws.dws_fy_metro_compare;
 
-DROP TABLE IF EXISTS ads_sport_type_ratio_top5;
-CREATE TABLE ads_sport_type_ratio_top5
+-- 7. 各装修情况平均租金（雷达图）
+DROP TABLE IF EXISTS ads_zx_avg_rent;
+CREATE TABLE ads_zx_avg_rent
 ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
 STORED AS TEXTFILE AS
-SELECT
-       CASE WHEN venue_type_std IS NULL OR TRIM(venue_type_std) = '' THEN '其他场馆' ELSE venue_type_std END AS venue_type,
-       venue_count,
-       ROUND(venue_count / SUM(venue_count) OVER (), 4) AS venue_ratio,
-       avg_score
-FROM wenyu_dws.dws_sport_type_summary
-ORDER BY venue_count DESC
-LIMIT 5;
+SELECT zx_qk, fysl, pj_zj, pj_dj
+FROM rental_dws.dws_fy_zx_summary;
 
-DROP TABLE IF EXISTS ads_scenic_free_ratio;
-CREATE TABLE ads_scenic_free_ratio
+-- 8. 各平台房源分布（条形图）
+DROP TABLE IF EXISTS ads_platform_distribution;
+CREATE TABLE ads_platform_distribution
 ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
 STORED AS TEXTFILE AS
-SELECT scenic_type, scenic_count, ROUND(scenic_count / total, 4) AS scenic_ratio
-FROM (
-    SELECT '免费景点' AS scenic_type,
-           SUM(free_count) AS scenic_count,
-           SUM(scenic_count) AS total
-    FROM wenyu_dws.dws_scenic_visit_time_summary
-    UNION ALL
-    SELECT '收费景点' AS scenic_type,
-           SUM(scenic_count) - SUM(free_count) AS scenic_count,
-           SUM(scenic_count) AS total
-    FROM wenyu_dws.dws_scenic_visit_time_summary
-) t
-WHERE total > 0;
+SELECT platform, fysl, pj_zj
+FROM rental_dws.dws_fy_platform_summary;

@@ -1,94 +1,22 @@
-USE wenyu_ods;
+USE rental_ods;
 
-DROP TABLE IF EXISTS ods_scenic_info;
-CREATE EXTERNAL TABLE ods_scenic_info (
-    name STRING,
-    level STRING,
-    region STRING,
-    address STRING,
-    price STRING,
-    price_min DECIMAL(10,2),
-    price_max DECIMAL(10,2),
-    open_time STRING,
-    visit_duration STRING,
-    best_visit_time STRING,
-    source_url STRING,
-    source_site STRING,
-    crawl_time STRING
-)
-ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
+DROP TABLE IF EXISTS ods_fy_jbxx;
+CREATE EXTERNAL TABLE ods_fy_jbxx (
+    fy_id STRING COMMENT '房源唯一ID',
+    fy_title STRING COMMENT '房源标题',
+    fy_type STRING COMMENT '房源类型',
+    fy_status STRING COMMENT '房源状态',
+    platform STRING COMMENT '来源平台',
+    xzq STRING COMMENT '行政区',
+    sq STRING COMMENT '商圈',
+    jd DECIMAL(9,6) COMMENT '经度',
+    wd DECIMAL(9,6) COMMENT '纬度',
+    month_zj INT COMMENT '月租金(元)',
+    jzmj DECIMAL(5,1) COMMENT '建筑面积(平方米)',
+    is_dt STRING COMMENT '是否地铁房',
+    zx_qk STRING COMMENT '装修情况'
+) COMMENT '北京租房房源基础信息原始表'
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
 STORED AS TEXTFILE
-LOCATION '/data/clean/scenic';
-
-DROP TABLE IF EXISTS ods_show_info;
-CREATE EXTERNAL TABLE ods_show_info (
-    name STRING,
-    show_time STRING,
-    venue STRING,
-    region STRING,
-    price_range STRING,
-    price_min DECIMAL(10,2),
-    price_max DECIMAL(10,2),
-    status STRING,
-    attention DECIMAL(10,2),
-    source_url STRING,
-    source_site STRING,
-    crawl_time STRING
-)
-ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
-STORED AS TEXTFILE
-LOCATION '/data/clean/show';
-
-DROP TABLE IF EXISTS ods_ktv_info;
-CREATE EXTERNAL TABLE ods_ktv_info (
-    name STRING,
-    region STRING,
-    address STRING,
-    avg_cost DECIMAL(10,2),
-    service_score DECIMAL(10,2),
-    env_score DECIMAL(10,2),
-    overall_score DECIMAL(10,2),
-    popularity BIGINT,
-    business_hours STRING,
-    source_url STRING,
-    source_site STRING,
-    crawl_time STRING
-)
-ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
-STORED AS TEXTFILE
-LOCATION '/data/clean/ktv';
-
-DROP TABLE IF EXISTS ods_movie_info;
-CREATE EXTERNAL TABLE ods_movie_info (
-    name STRING,
-    score DECIMAL(10,2),
-    category STRING,
-    country_region STRING,
-    director STRING,
-    actors STRING,
-    intro STRING,
-    source_url STRING,
-    source_site STRING,
-    crawl_time STRING
-)
-ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
-STORED AS TEXTFILE
-LOCATION '/data/clean/movie';
-
-DROP TABLE IF EXISTS ods_sport_info;
-CREATE EXTERNAL TABLE ods_sport_info (
-    name STRING,
-    venue_type STRING,
-    region STRING,
-    address STRING,
-    score DECIMAL(10,2),
-    comment_count BIGINT,
-    avg_cost DECIMAL(10,2),
-    open_time STRING,
-    source_url STRING,
-    source_site STRING,
-    crawl_time STRING
-)
-ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
-STORED AS TEXTFILE
-LOCATION '/data/clean/sport';
+LOCATION '/data/clean/rental';

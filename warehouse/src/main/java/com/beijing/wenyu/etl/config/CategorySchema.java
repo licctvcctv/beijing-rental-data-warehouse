@@ -11,25 +11,9 @@ public final class CategorySchema {
     private static final Map<String, List<String>> SOURCE_FIELDS = new LinkedHashMap<String, List<String>>();
 
     static {
-        SOURCE_FIELDS.put("scenic", Arrays.asList(
-                "name", "level", "region", "address", "price", "open_time", "visit_duration",
-                "best_visit_time", "source_url", "source_site", "crawl_time"
-        ));
-        SOURCE_FIELDS.put("show", Arrays.asList(
-                "name", "show_time", "venue", "region", "price_range", "status", "attention",
-                "source_url", "source_site", "crawl_time"
-        ));
-        SOURCE_FIELDS.put("ktv", Arrays.asList(
-                "name", "region", "address", "avg_cost", "service_score", "env_score", "overall_score",
-                "popularity", "business_hours", "source_url", "source_site", "crawl_time"
-        ));
-        SOURCE_FIELDS.put("movie", Arrays.asList(
-                "name", "score", "category", "country_region", "director", "actors", "intro",
-                "source_url", "source_site", "crawl_time"
-        ));
-        SOURCE_FIELDS.put("sport", Arrays.asList(
-                "name", "venue_type", "region", "address", "score", "comment_count", "avg_cost",
-                "open_time", "source_url", "source_site", "crawl_time"
+        SOURCE_FIELDS.put("rental", Arrays.asList(
+                "fy_id", "fy_title", "fy_type", "fy_status", "platform",
+                "xzq", "sq", "jd", "wd", "month_zj", "jzmj", "is_dt", "zx_qk"
         ));
     }
 

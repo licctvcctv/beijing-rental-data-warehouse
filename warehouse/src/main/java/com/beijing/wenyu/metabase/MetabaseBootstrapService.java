@@ -245,7 +245,7 @@ public class MetabaseBootstrapService {
     private String dashboardPayload() {
         return "{"
                 + "\"name\":" + JsonUtils.quote(config.getDashboardName()) + ","
-                + "\"description\":\"自动初始化的北京娱乐方式离线数仓 BI 面板\","
+                + "\"description\":\"自动初始化的北京租房数据离线数仓 BI 面板\","
                 + "\"parameters\":[],"
                 + "\"width\":\"full\""
                 + "}";

@@ -3,11 +3,7 @@ package com.beijing.wenyu.runner;
 import com.beijing.wenyu.common.WarehouseConfig;
 import com.beijing.wenyu.common.WarehouseConstants;
 import com.beijing.wenyu.etl.cleaner.AbstractCleanJob;
-import com.beijing.wenyu.etl.cleaner.CleanKtvJob;
-import com.beijing.wenyu.etl.cleaner.CleanMovieJob;
-import com.beijing.wenyu.etl.cleaner.CleanScenicJob;
-import com.beijing.wenyu.etl.cleaner.CleanShowJob;
-import com.beijing.wenyu.etl.cleaner.CleanSportJob;
+import com.beijing.wenyu.etl.cleaner.CleanRentalJob;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -20,11 +16,7 @@ public class EtlRunner {
         String cleanBase = config.get("hdfs.clean.base");
 
         Map<String, AbstractCleanJob> jobs = new LinkedHashMap<String, AbstractCleanJob>();
-        jobs.put("scenic", new CleanScenicJob());
-        jobs.put("show", new CleanShowJob());
-        jobs.put("ktv", new CleanKtvJob());
-        jobs.put("movie", new CleanMovieJob());
-        jobs.put("sport", new CleanSportJob());
+        jobs.put("rental", new CleanRentalJob());
 
         if (args.length > 0) {
             String category = args[0];

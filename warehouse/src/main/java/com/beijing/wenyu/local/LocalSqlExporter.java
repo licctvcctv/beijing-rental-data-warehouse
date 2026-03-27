@@ -13,14 +13,14 @@ import java.util.Map;
 public class LocalSqlExporter {
 
     private static final List<String> ADS_TABLES = Arrays.asList(
-            "ads_region_entertainment_count",
-            "ads_movie_score_distribution",
-            "ads_show_price_top10",
-            "ads_show_status_ratio",
-            "ads_ktv_region_hotspot",
-            "ads_ktv_cost_performance_top5",
-            "ads_sport_type_ratio_top5",
-            "ads_scenic_free_ratio"
+            "ads_xzq_avg_rent",
+            "ads_fy_heatmap",
+            "ads_sq_top10",
+            "ads_fy_type_ratio",
+            "ads_price_area_scatter",
+            "ads_metro_rent_compare",
+            "ads_zx_avg_rent",
+            "ads_platform_distribution"
     );
 
     public void writeAdsSeedSql(File sqlFile, Map<String, LocalTable> adsTables) throws IOException {

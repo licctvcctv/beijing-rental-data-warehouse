@@ -10,66 +10,22 @@ class LinkRecord:
     page: int
     source_site: str
     name: str = ""
-    level: str = ""
-    region: str = ""
-    tag: str = ""
+    xzq: str = ""
+    sq: str = ""
 
 
 @dataclass(frozen=True)
-class ScenicRecord:
-    name: str
-    level: str
-    region: str
-    address: str
-    price: str
-    open_time: str
-    visit_duration: str
-    best_visit_time: str
-    source_url: str
-    source_site: str
-    crawl_time: str
-
-
-@dataclass(frozen=True)
-class ShowRecord:
-    name: str
-    show_time: str
-    venue: str
-    region: str
-    price_range: str
-    status: str
-    attention: str
-    source_url: str
-    source_site: str
-    crawl_time: str
-
-
-@dataclass(frozen=True)
-class KtvRecord:
-    name: str
-    region: str
-    address: str
-    avg_cost: str
-    service_score: str
-    env_score: str
-    overall_score: str
-    popularity: str
-    business_hours: str
-    source_url: str
-    source_site: str
-    crawl_time: str
-
-
-@dataclass(frozen=True)
-class SportRecord:
-    name: str
-    venue_type: str
-    region: str
-    address: str
-    score: str
-    comment_count: str
-    avg_cost: str
-    open_time: str
-    source_url: str
-    source_site: str
-    crawl_time: str
+class RentalRecord:
+    fy_id: str
+    fy_title: str
+    fy_type: str
+    fy_status: str
+    platform: str
+    xzq: str
+    sq: str
+    jd: str
+    wd: str
+    month_zj: str
+    jzmj: str
+    is_dt: str
+    zx_qk: str

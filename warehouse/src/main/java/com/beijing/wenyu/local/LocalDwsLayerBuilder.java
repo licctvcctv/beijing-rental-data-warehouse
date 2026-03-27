@@ -12,14 +12,14 @@ import java.util.TreeMap;
 public class LocalDwsLayerBuilder {
 
     public Map<String, LocalTable> build(Map<String, LocalTable> dwdTables) {
+        LocalTable dwd = requireTable(dwdTables, "dwd_fy_mx");
         LinkedHashMap<String, LocalTable> tables = new LinkedHashMap<String, LocalTable>();
-        tables.put("dws_region_summary", buildRegionSummary(dwdTables));
-        tables.put("dws_movie_score_summary", buildMovieScoreSummary(requireTable(dwdTables, "dwd_movie_detail")));
-        tables.put("dws_show_status_summary", buildShowStatusSummary(requireTable(dwdTables, "dwd_show_detail")));
-        tables.put("dws_show_price_summary", buildShowPriceSummary(requireTable(dwdTables, "dwd_show_detail")));
-        tables.put("dws_ktv_region_summary", buildKtvRegionSummary(requireTable(dwdTables, "dwd_ktv_detail")));
-        tables.put("dws_sport_type_summary", buildSportTypeSummary(requireTable(dwdTables, "dwd_sport_detail")));
-        tables.put("dws_scenic_visit_time_summary", buildScenicVisitSummary(requireTable(dwdTables, "dwd_scenic_detail")));
+        tables.put("dws_fy_xzq_zj", buildXzqSummary(dwd));
+        tables.put("dws_fy_sq_summary", buildSqSummary(dwd));
+        tables.put("dws_fy_type_summary", buildTypeSummary(dwd));
+        tables.put("dws_fy_metro_compare", buildMetroCompare(dwd));
+        tables.put("dws_fy_zx_summary", buildZxSummary(dwd));
+        tables.put("dws_fy_platform_summary", buildPlatformSummary(dwd));
         return tables;
     }
 
@@ -31,202 +31,162 @@ public class LocalDwsLayerBuilder {
         return table;
     }
 
-    private LocalTable buildRegionSummary(Map<String, LocalTable> dwdTables) {
-        LocalTable table = new LocalTable("dws_region_summary", Arrays.asList("region", "category", "total_count"));
-        appendRegionRows(table, countByField(requireTable(dwdTables, "dwd_scenic_detail"), "region_std"), "scenic");
-        appendRegionRows(table, countByField(requireTable(dwdTables, "dwd_show_detail"), "region_std"), "show");
-        appendRegionRows(table, countByField(requireTable(dwdTables, "dwd_ktv_detail"), "region_std"), "ktv");
-        LinkedHashMap<String, String> movie = new LinkedHashMap<String, String>();
-        movie.put("region", "北京市");
-        movie.put("category", "movie");
-        movie.put("total_count", String.valueOf(requireTable(dwdTables, "dwd_movie_detail").getRows().size()));
-        table.addRow(movie);
-        appendRegionRows(table, countByField(requireTable(dwdTables, "dwd_sport_detail"), "region_std"), "sport");
-        return table;
-    }
-
-    private void appendRegionRows(LocalTable table, Map<String, Integer> counts, String category) {
-        for (Map.Entry<String, Integer> entry : counts.entrySet()) {
-            LinkedHashMap<String, String> row = new LinkedHashMap<String, String>();
-            row.put("region", entry.getKey());
-            row.put("category", category);
-            row.put("total_count", String.valueOf(entry.getValue()));
-            table.addRow(row);
-        }
-    }
-
-    private LocalTable buildMovieScoreSummary(LocalTable source) {
-        Map<String, List<Double>> groups = new TreeMap<String, List<Double>>();
+    private LocalTable buildXzqSummary(LocalTable source) {
+        Map<String, List<Integer>> groups = new TreeMap<String, List<Integer>>();
         for (Map<String, String> row : source.getRows()) {
-            String level = row.get("score_level");
-            if (!groups.containsKey(level)) {
-                groups.put(level, new ArrayList<Double>());
+            String xzq = row.get("xzq");
+            if (!groups.containsKey(xzq)) {
+                groups.put(xzq, new ArrayList<Integer>());
             }
-            groups.get(level).add(LocalValueUtils.parseDouble(row.get("score_num")));
+            groups.get(xzq).add((int) LocalValueUtils.parseLong(row.get("month_zj")));
         }
-        List<Map.Entry<String, List<Double>>> entries = new ArrayList<Map.Entry<String, List<Double>>>(groups.entrySet());
-        Collections.sort(entries, new Comparator<Map.Entry<String, List<Double>>>() {
-            @Override
-            public int compare(Map.Entry<String, List<Double>> left, Map.Entry<String, List<Double>> right) {
-                int countCompare = Integer.valueOf(right.getValue().size()).compareTo(left.getValue().size());
-                return countCompare != 0 ? countCompare : left.getKey().compareTo(right.getKey());
-            }
-        });
-        LocalTable table = new LocalTable("dws_movie_score_summary", Arrays.asList("score_level", "movie_count", "avg_score"));
-        for (Map.Entry<String, List<Double>> entry : entries) {
+        LocalTable table = new LocalTable("dws_fy_xzq_zj", Arrays.asList("xzq", "pj_zj", "fysl", "max_zj", "min_zj"));
+        for (Map.Entry<String, List<Integer>> entry : groups.entrySet()) {
+            List<Integer> rents = entry.getValue();
+            int max = Integer.MIN_VALUE, min = Integer.MAX_VALUE;
+            long sum = 0;
+            for (int r : rents) { sum += r; max = Math.max(max, r); min = Math.min(min, r); }
             LinkedHashMap<String, String> row = new LinkedHashMap<String, String>();
-            row.put("score_level", entry.getKey());
-            row.put("movie_count", String.valueOf(entry.getValue().size()));
-            row.put("avg_score", LocalValueUtils.formatDecimal(average(entry.getValue()), 2));
+            row.put("xzq", entry.getKey());
+            row.put("pj_zj", LocalValueUtils.formatDecimal(sum * 1.0 / rents.size(), 2));
+            row.put("fysl", String.valueOf(rents.size()));
+            row.put("max_zj", String.valueOf(max));
+            row.put("min_zj", String.valueOf(min));
             table.addRow(row);
         }
         return table;
     }
 
-    private LocalTable buildShowStatusSummary(LocalTable source) {
-        Map<String, List<Double>> groups = new TreeMap<String, List<Double>>();
-        for (Map<String, String> row : source.getRows()) {
-            String status = row.get("status_std");
-            if (!groups.containsKey(status)) {
-                groups.put(status, new ArrayList<Double>());
-            }
-            groups.get(status).add(LocalValueUtils.parseDouble(row.get("attention_num")));
-        }
-        List<Map.Entry<String, List<Double>>> entries = new ArrayList<Map.Entry<String, List<Double>>>(groups.entrySet());
-        Collections.sort(entries, new Comparator<Map.Entry<String, List<Double>>>() {
-            @Override
-            public int compare(Map.Entry<String, List<Double>> left, Map.Entry<String, List<Double>> right) {
-                int countCompare = Integer.valueOf(right.getValue().size()).compareTo(left.getValue().size());
-                return countCompare != 0 ? countCompare : left.getKey().compareTo(right.getKey());
-            }
-        });
-        LocalTable table = new LocalTable("dws_show_status_summary", Arrays.asList("status_std", "show_count", "avg_attention"));
-        for (Map.Entry<String, List<Double>> entry : entries) {
-            LinkedHashMap<String, String> row = new LinkedHashMap<String, String>();
-            row.put("status_std", entry.getKey());
-            row.put("show_count", String.valueOf(entry.getValue().size()));
-            row.put("avg_attention", LocalValueUtils.formatDecimal(average(entry.getValue()), 2));
-            table.addRow(row);
-        }
-        return table;
-    }
-
-    private LocalTable buildShowPriceSummary(LocalTable source) {
-        LocalTable table = new LocalTable(
-                "dws_show_price_summary",
-                Arrays.asList("name", "venue", "region_std", "price_min", "price_max", "status_std", "attention_num")
-        );
-        for (Map<String, String> row : source.getRows()) {
-            table.addRow(row);
-        }
-        return table;
-    }
-
-    private LocalTable buildKtvRegionSummary(LocalTable source) {
+    private LocalTable buildSqSummary(LocalTable source) {
         Map<String, List<Map<String, String>>> groups = new TreeMap<String, List<Map<String, String>>>();
         for (Map<String, String> row : source.getRows()) {
-            String region = row.get("region_std");
-            if (!groups.containsKey(region)) {
-                groups.put(region, new ArrayList<Map<String, String>>());
+            String key = row.get("sq") + "|" + row.get("xzq");
+            if (!groups.containsKey(key)) {
+                groups.put(key, new ArrayList<Map<String, String>>());
             }
-            groups.get(region).add(row);
+            groups.get(key).add(row);
         }
-        List<Map.Entry<String, List<Map<String, String>>>> entries = new ArrayList<Map.Entry<String, List<Map<String, String>>>>(groups.entrySet());
-        Collections.sort(entries, new Comparator<Map.Entry<String, List<Map<String, String>>>>() {
-            @Override
-            public int compare(Map.Entry<String, List<Map<String, String>>> left, Map.Entry<String, List<Map<String, String>>> right) {
-                int countCompare = Integer.valueOf(right.getValue().size()).compareTo(left.getValue().size());
-                return countCompare != 0 ? countCompare : left.getKey().compareTo(right.getKey());
+        LocalTable table = new LocalTable("dws_fy_sq_summary", Arrays.asList("sq", "xzq", "fysl", "pj_zj", "center_jd", "center_wd"));
+        for (Map.Entry<String, List<Map<String, String>>> entry : groups.entrySet()) {
+            List<Map<String, String>> rows = entry.getValue();
+            double sumZj = 0, sumJd = 0, sumWd = 0;
+            for (Map<String, String> r : rows) {
+                sumZj += LocalValueUtils.parseLong(r.get("month_zj"));
+                sumJd += LocalValueUtils.parseDouble(r.get("jd"));
+                sumWd += LocalValueUtils.parseDouble(r.get("wd"));
             }
-        });
-        LocalTable table = new LocalTable("dws_ktv_region_summary", Arrays.asList("region_std", "ktv_count", "avg_cost", "avg_score"));
-        for (Map.Entry<String, List<Map<String, String>>> entry : entries) {
-            List<Double> costs = new ArrayList<Double>();
-            List<Double> scores = new ArrayList<Double>();
-            for (Map<String, String> row : entry.getValue()) {
-                costs.add(LocalValueUtils.parseDouble(row.get("avg_cost")));
-                scores.add(LocalValueUtils.parseDouble(row.get("overall_score")));
-            }
-            LinkedHashMap<String, String> result = new LinkedHashMap<String, String>();
-            result.put("region_std", entry.getKey());
-            result.put("ktv_count", String.valueOf(entry.getValue().size()));
-            result.put("avg_cost", LocalValueUtils.formatDecimal(average(costs), 2));
-            result.put("avg_score", LocalValueUtils.formatDecimal(average(scores), 2));
-            table.addRow(result);
-        }
-        return table;
-    }
-
-    private LocalTable buildSportTypeSummary(LocalTable source) {
-        Map<String, List<Double>> groups = new TreeMap<String, List<Double>>();
-        for (Map<String, String> row : source.getRows()) {
-            String type = row.get("venue_type_std");
-            if (!groups.containsKey(type)) {
-                groups.put(type, new ArrayList<Double>());
-            }
-            groups.get(type).add(LocalValueUtils.parseDouble(row.get("score_num")));
-        }
-        List<Map.Entry<String, List<Double>>> entries = new ArrayList<Map.Entry<String, List<Double>>>(groups.entrySet());
-        Collections.sort(entries, new Comparator<Map.Entry<String, List<Double>>>() {
-            @Override
-            public int compare(Map.Entry<String, List<Double>> left, Map.Entry<String, List<Double>> right) {
-                int countCompare = Integer.valueOf(right.getValue().size()).compareTo(left.getValue().size());
-                return countCompare != 0 ? countCompare : left.getKey().compareTo(right.getKey());
-            }
-        });
-        LocalTable table = new LocalTable("dws_sport_type_summary", Arrays.asList("venue_type_std", "venue_count", "avg_score"));
-        for (Map.Entry<String, List<Double>> entry : entries) {
+            String[] parts = entry.getKey().split("\\|", 2);
             LinkedHashMap<String, String> row = new LinkedHashMap<String, String>();
-            row.put("venue_type_std", entry.getKey());
-            row.put("venue_count", String.valueOf(entry.getValue().size()));
-            row.put("avg_score", LocalValueUtils.formatDecimal(average(entry.getValue()), 2));
+            row.put("sq", parts[0]);
+            row.put("xzq", parts[1]);
+            row.put("fysl", String.valueOf(rows.size()));
+            row.put("pj_zj", LocalValueUtils.formatDecimal(sumZj / rows.size(), 2));
+            row.put("center_jd", LocalValueUtils.formatDecimal(sumJd / rows.size(), 6));
+            row.put("center_wd", LocalValueUtils.formatDecimal(sumWd / rows.size(), 6));
             table.addRow(row);
         }
         return table;
     }
 
-    private LocalTable buildScenicVisitSummary(LocalTable source) {
-        Map<String, int[]> groups = new TreeMap<String, int[]>();
+    private LocalTable buildTypeSummary(LocalTable source) {
+        Map<String, List<Map<String, String>>> groups = new TreeMap<String, List<Map<String, String>>>();
         for (Map<String, String> row : source.getRows()) {
-            String bestVisitTime = row.get("best_visit_time");
-            if (!groups.containsKey(bestVisitTime)) {
-                groups.put(bestVisitTime, new int[]{0, 0});
+            String key = row.get("fy_type");
+            if (!groups.containsKey(key)) {
+                groups.put(key, new ArrayList<Map<String, String>>());
             }
-            int[] values = groups.get(bestVisitTime);
-            values[0] = values[0] + 1;
-            if (LocalValueUtils.parseDouble(row.get("price_min")) == 0D) {
-                values[1] = values[1] + 1;
-            }
+            groups.get(key).add(row);
         }
-        LocalTable table = new LocalTable("dws_scenic_visit_time_summary", Arrays.asList("best_visit_time", "scenic_count", "free_count"));
-        for (Map.Entry<String, int[]> entry : groups.entrySet()) {
+        LocalTable table = new LocalTable("dws_fy_type_summary", Arrays.asList("fy_type", "fysl", "pj_zj", "pj_mj"));
+        for (Map.Entry<String, List<Map<String, String>>> entry : groups.entrySet()) {
+            List<Map<String, String>> rows = entry.getValue();
+            double sumZj = 0, sumMj = 0;
+            for (Map<String, String> r : rows) {
+                sumZj += LocalValueUtils.parseLong(r.get("month_zj"));
+                sumMj += LocalValueUtils.parseDouble(r.get("jzmj"));
+            }
             LinkedHashMap<String, String> row = new LinkedHashMap<String, String>();
-            row.put("best_visit_time", entry.getKey());
-            row.put("scenic_count", String.valueOf(entry.getValue()[0]));
-            row.put("free_count", String.valueOf(entry.getValue()[1]));
+            row.put("fy_type", entry.getKey());
+            row.put("fysl", String.valueOf(rows.size()));
+            row.put("pj_zj", LocalValueUtils.formatDecimal(sumZj / rows.size(), 2));
+            row.put("pj_mj", LocalValueUtils.formatDecimal(sumMj / rows.size(), 1));
             table.addRow(row);
         }
         return table;
     }
 
-    private Map<String, Integer> countByField(LocalTable table, String fieldName) {
-        Map<String, Integer> counts = new TreeMap<String, Integer>();
-        for (Map<String, String> row : table.getRows()) {
-            String key = row.get(fieldName);
-            Integer current = counts.get(key);
-            counts.put(key, current == null ? 1 : current + 1);
+    private LocalTable buildMetroCompare(LocalTable source) {
+        Map<String, List<Integer>> groups = new TreeMap<String, List<Integer>>();
+        for (Map<String, String> row : source.getRows()) {
+            String key = row.get("xzq") + "|" + row.get("is_dt");
+            if (!groups.containsKey(key)) {
+                groups.put(key, new ArrayList<Integer>());
+            }
+            groups.get(key).add((int) LocalValueUtils.parseLong(row.get("month_zj")));
         }
-        return counts;
+        LocalTable table = new LocalTable("dws_fy_metro_compare", Arrays.asList("xzq", "is_dt", "fysl", "pj_zj"));
+        for (Map.Entry<String, List<Integer>> entry : groups.entrySet()) {
+            List<Integer> rents = entry.getValue();
+            long sum = 0;
+            for (int r : rents) { sum += r; }
+            String[] parts = entry.getKey().split("\\|", 2);
+            LinkedHashMap<String, String> row = new LinkedHashMap<String, String>();
+            row.put("xzq", parts[0]);
+            row.put("is_dt", parts[1]);
+            row.put("fysl", String.valueOf(rents.size()));
+            row.put("pj_zj", LocalValueUtils.formatDecimal(sum * 1.0 / rents.size(), 2));
+            table.addRow(row);
+        }
+        return table;
     }
 
-    private double average(List<Double> values) {
-        if (values.isEmpty()) {
-            return 0D;
+    private LocalTable buildZxSummary(LocalTable source) {
+        Map<String, List<Map<String, String>>> groups = new TreeMap<String, List<Map<String, String>>>();
+        for (Map<String, String> row : source.getRows()) {
+            String key = row.get("zx_qk");
+            if (!groups.containsKey(key)) {
+                groups.put(key, new ArrayList<Map<String, String>>());
+            }
+            groups.get(key).add(row);
         }
-        double total = 0D;
-        for (Double value : values) {
-            total += value;
+        LocalTable table = new LocalTable("dws_fy_zx_summary", Arrays.asList("zx_qk", "fysl", "pj_zj", "pj_dj"));
+        for (Map.Entry<String, List<Map<String, String>>> entry : groups.entrySet()) {
+            List<Map<String, String>> rows = entry.getValue();
+            double sumZj = 0, sumDj = 0;
+            for (Map<String, String> r : rows) {
+                sumZj += LocalValueUtils.parseLong(r.get("month_zj"));
+                sumDj += LocalValueUtils.parseDouble(r.get("unit_dj"));
+            }
+            LinkedHashMap<String, String> row = new LinkedHashMap<String, String>();
+            row.put("zx_qk", entry.getKey());
+            row.put("fysl", String.valueOf(rows.size()));
+            row.put("pj_zj", LocalValueUtils.formatDecimal(sumZj / rows.size(), 2));
+            row.put("pj_dj", LocalValueUtils.formatDecimal(sumDj / rows.size(), 2));
+            table.addRow(row);
         }
-        return total / values.size();
+        return table;
+    }
+
+    private LocalTable buildPlatformSummary(LocalTable source) {
+        Map<String, List<Integer>> groups = new TreeMap<String, List<Integer>>();
+        for (Map<String, String> row : source.getRows()) {
+            String key = row.get("platform");
+            if (!groups.containsKey(key)) {
+                groups.put(key, new ArrayList<Integer>());
+            }
+            groups.get(key).add((int) LocalValueUtils.parseLong(row.get("month_zj")));
+        }
+        LocalTable table = new LocalTable("dws_fy_platform_summary", Arrays.asList("platform", "fysl", "pj_zj"));
+        for (Map.Entry<String, List<Integer>> entry : groups.entrySet()) {
+            List<Integer> rents = entry.getValue();
+            long sum = 0;
+            for (int r : rents) { sum += r; }
+            LinkedHashMap<String, String> row = new LinkedHashMap<String, String>();
+            row.put("platform", entry.getKey());
+            row.put("fysl", String.valueOf(rents.size()));
+            row.put("pj_zj", LocalValueUtils.formatDecimal(sum * 1.0 / rents.size(), 2));
+            table.addRow(row);
+        }
+        return table;
     }
 }

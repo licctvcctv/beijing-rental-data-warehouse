@@ -31,11 +31,7 @@ public class LocalArtifactWriter {
     }
 
     private void copyRaw(File rawDir, File targetDir) throws IOException {
-        copyIfExists(new File(rawDir, "scenic_raw.csv"), new File(targetDir, "scenic_raw.csv"));
-        copyIfExists(new File(rawDir, "show_raw.csv"), new File(targetDir, "show_raw.csv"));
-        copyIfExists(new File(rawDir, "ktv_raw.csv"), new File(targetDir, "ktv_raw.csv"));
-        copyIfExists(new File(rawDir, "movie_raw.csv"), new File(targetDir, "movie_raw.csv"));
-        copyIfExists(new File(rawDir, "sport_raw.csv"), new File(targetDir, "sport_raw.csv"));
+        copyIfExists(new File(rawDir, "rental_raw.csv"), new File(targetDir, "rental_raw.csv"));
     }
 
     private void copyIfExists(File source, File target) throws IOException {

@@ -21,17 +21,17 @@ public class MetabaseConfig {
     public MetabaseConfig() {
         this.metabaseUrl = env("METABASE_URL", "http://localhost:3000");
         this.metabasePublicUrl = env("METABASE_PUBLIC_URL", this.metabaseUrl);
-        this.adminEmail = env("METABASE_ADMIN_EMAIL", "admin@wenyu.local");
+        this.adminEmail = env("METABASE_ADMIN_EMAIL", "admin@rental.local");
         this.adminPassword = env("METABASE_ADMIN_PASSWORD", "Admin@123456");
-        this.adminFirstName = env("METABASE_ADMIN_FIRST_NAME", "Wenyu");
+        this.adminFirstName = env("METABASE_ADMIN_FIRST_NAME", "Rental");
         this.adminLastName = env("METABASE_ADMIN_LAST_NAME", "Admin");
-        this.dbName = env("METABASE_DB_NAME", "Wenyu MySQL");
-        this.dashboardName = env("METABASE_DASHBOARD_NAME", "北京娱乐方式离线数仓 BI 看板");
+        this.dbName = env("METABASE_DB_NAME", "Rental MySQL");
+        this.dashboardName = env("METABASE_DASHBOARD_NAME", "北京租房数据离线数仓 BI 看板");
         this.mysqlHost = env("METABASE_MYSQL_HOST", "mysql");
         this.mysqlPort = Integer.parseInt(env("METABASE_MYSQL_PORT", "3306"));
-        this.mysqlDatabase = env("METABASE_MYSQL_DATABASE", "wenyu_result");
-        this.mysqlUser = env("METABASE_MYSQL_USER", "wenyu");
-        this.mysqlPassword = env("METABASE_MYSQL_PASSWORD", "wenyu123");
+        this.mysqlDatabase = env("METABASE_MYSQL_DATABASE", "rental_result");
+        this.mysqlUser = env("METABASE_MYSQL_USER", "rental");
+        this.mysqlPassword = env("METABASE_MYSQL_PASSWORD", "rental123");
         this.waitTimeoutSeconds = Integer.parseInt(env("METABASE_WAIT_TIMEOUT_SECONDS", "180"));
         this.bootstrapMarkerPath = env("METABASE_BOOTSTRAP_MARKER_PATH", "");
     }
