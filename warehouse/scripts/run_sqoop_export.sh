@@ -3,7 +3,7 @@ set -e
 
 MYSQL_HOST=${MYSQL_HOST:-localhost}
 MYSQL_PORT=${MYSQL_PORT:-3306}
-MYSQL_DB=${MYSQL_DB:-wenyu_result}
+MYSQL_DB=${MYSQL_DB:-rental_result}
 MYSQL_USER=${MYSQL_USER:-root}
 MYSQL_PASSWORD=${MYSQL_PASSWORD:-root}
 MYSQL_JDBC_URL="jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DB}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true"
@@ -40,11 +40,11 @@ export_table() {
     --input-null-non-string '\\N'
 }
 
-export_table ads_region_entertainment_count /user/hive/warehouse/wenyu_ads.db/ads_region_entertainment_count region,entertainment_count
-export_table ads_movie_score_distribution /user/hive/warehouse/wenyu_ads.db/ads_movie_score_distribution score_level,movie_count,avg_score
-export_table ads_show_price_top10 /user/hive/warehouse/wenyu_ads.db/ads_show_price_top10 name,venue,region,price_max,price_min,status_std,attention_num
-export_table ads_show_status_ratio /user/hive/warehouse/wenyu_ads.db/ads_show_status_ratio status_std,show_count,status_ratio
-export_table ads_ktv_region_hotspot /user/hive/warehouse/wenyu_ads.db/ads_ktv_region_hotspot region,ktv_count,avg_cost,avg_score
-export_table ads_ktv_cost_performance_top5 /user/hive/warehouse/wenyu_ads.db/ads_ktv_cost_performance_top5 name,region,avg_cost,overall_score,cost_performance,popularity_num
-export_table ads_sport_type_ratio_top5 /user/hive/warehouse/wenyu_ads.db/ads_sport_type_ratio_top5 venue_type,venue_count,venue_ratio,avg_score
-export_table ads_scenic_free_ratio /user/hive/warehouse/wenyu_ads.db/ads_scenic_free_ratio scenic_type,scenic_count,scenic_ratio
+export_table ads_xzq_avg_rent /user/hive/warehouse/rental_ads.db/ads_xzq_avg_rent xzq,pj_zj,fysl,max_zj,min_zj
+export_table ads_fy_heatmap /user/hive/warehouse/rental_ads.db/ads_fy_heatmap sq,xzq,pj_zj,center_jd,center_wd,fysl
+export_table ads_sq_top10 /user/hive/warehouse/rental_ads.db/ads_sq_top10 sq,xzq,fysl,pj_zj
+export_table ads_fy_type_ratio /user/hive/warehouse/rental_ads.db/ads_fy_type_ratio fy_type,fysl,type_ratio,pj_zj,pj_mj
+export_table ads_price_area_scatter /user/hive/warehouse/rental_ads.db/ads_price_area_scatter fy_id,xzq,unit_dj,jzmj,month_zj
+export_table ads_metro_rent_compare /user/hive/warehouse/rental_ads.db/ads_metro_rent_compare xzq,is_dt,fysl,pj_zj
+export_table ads_zx_avg_rent /user/hive/warehouse/rental_ads.db/ads_zx_avg_rent zx_qk,fysl,pj_zj,pj_dj
+export_table ads_platform_distribution /user/hive/warehouse/rental_ads.db/ads_platform_distribution platform,fysl,pj_zj

@@ -9,22 +9,22 @@ log() {
 
 print_ads_counts() {
   hive -S <<'SQL'
-USE wenyu_ads;
-SELECT 'ads_region_entertainment_count', COUNT(1) FROM ads_region_entertainment_count
+USE rental_ads;
+SELECT 'ads_xzq_avg_rent', COUNT(1) FROM ads_xzq_avg_rent
 UNION ALL
-SELECT 'ads_movie_score_distribution', COUNT(1) FROM ads_movie_score_distribution
+SELECT 'ads_fy_heatmap', COUNT(1) FROM ads_fy_heatmap
 UNION ALL
-SELECT 'ads_show_price_top10', COUNT(1) FROM ads_show_price_top10
+SELECT 'ads_sq_top10', COUNT(1) FROM ads_sq_top10
 UNION ALL
-SELECT 'ads_show_status_ratio', COUNT(1) FROM ads_show_status_ratio
+SELECT 'ads_fy_type_ratio', COUNT(1) FROM ads_fy_type_ratio
 UNION ALL
-SELECT 'ads_ktv_region_hotspot', COUNT(1) FROM ads_ktv_region_hotspot
+SELECT 'ads_price_area_scatter', COUNT(1) FROM ads_price_area_scatter
 UNION ALL
-SELECT 'ads_ktv_cost_performance_top5', COUNT(1) FROM ads_ktv_cost_performance_top5
+SELECT 'ads_metro_rent_compare', COUNT(1) FROM ads_metro_rent_compare
 UNION ALL
-SELECT 'ads_sport_type_ratio_top5', COUNT(1) FROM ads_sport_type_ratio_top5
+SELECT 'ads_zx_avg_rent', COUNT(1) FROM ads_zx_avg_rent
 UNION ALL
-SELECT 'ads_scenic_free_ratio', COUNT(1) FROM ads_scenic_free_ratio;
+SELECT 'ads_platform_distribution', COUNT(1) FROM ads_platform_distribution;
 SQL
 }
 

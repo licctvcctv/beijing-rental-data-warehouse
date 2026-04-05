@@ -55,7 +55,7 @@ main() {
   mkdir -p "${OUTPUT_DIR}"
   trap on_error ERR
   rm -f "${PIPELINE_MARKER}"
-  rm -f "${OUTPUT_DIR}/summary.txt" "${OUTPUT_DIR}/mysql_counts.tsv" "${OUTPUT_DIR}/metabase.success" "${OUTPUT_DIR}"/ads_*.tsv
+  rm -f "${OUTPUT_DIR}/summary.txt" "${OUTPUT_DIR}/mysql_counts.tsv" "${OUTPUT_DIR}"/ads_*.tsv
 
   log "Waiting for HDFS, YARN, Hive and MySQL"
   wait_for_hdfs

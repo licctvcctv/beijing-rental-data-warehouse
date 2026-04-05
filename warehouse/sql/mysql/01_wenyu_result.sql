@@ -14,12 +14,12 @@ CREATE TABLE ads_xzq_avg_rent (
 DROP TABLE IF EXISTS ads_fy_heatmap;
 CREATE TABLE ads_fy_heatmap (
     sq VARCHAR(64) NOT NULL,
-    xzq VARCHAR(64) DEFAULT NULL COMMENT '行政区',
+    xzq VARCHAR(64) NOT NULL COMMENT '行政区',
     pj_zj DECIMAL(7,2) DEFAULT NULL COMMENT '平均租金',
     center_jd DECIMAL(9,6) DEFAULT NULL COMMENT '商圈中心经度',
     center_wd DECIMAL(9,6) DEFAULT NULL COMMENT '商圈中心纬度',
     fysl BIGINT DEFAULT 0 COMMENT '房源数量',
-    PRIMARY KEY (sq)
+    PRIMARY KEY (sq, xzq)
 ) COMMENT='租金热力图数据';
 
 DROP TABLE IF EXISTS ads_sq_top10;
@@ -76,3 +76,33 @@ CREATE TABLE ads_platform_distribution (
     pj_zj DECIMAL(7,2) DEFAULT NULL,
     PRIMARY KEY (platform)
 ) COMMENT='各平台房源分布';
+
+-- ========== 预测模块结果表 ==========
+
+DROP TABLE IF EXISTS ads_rent_predict_by_xzq;
+CREATE TABLE ads_rent_predict_by_xzq (
+    xzq VARCHAR(64) NOT NULL,
+    actual_avg_zj DECIMAL(7,2) COMMENT '实际平均租金',
+    predict_avg_zj DECIMAL(7,2) COMMENT '预测平均租金',
+    diff_pct DECIMAL(5,2) COMMENT '偏差百分比',
+    fysl BIGINT COMMENT '样本数量',
+    PRIMARY KEY (xzq)
+) COMMENT='各区租金预测对比';
+
+DROP TABLE IF EXISTS ads_rent_feature_importance;
+CREATE TABLE ads_rent_feature_importance (
+    feature_name VARCHAR(64) NOT NULL,
+    importance DECIMAL(8,4) COMMENT '特征重要性',
+    feature_desc VARCHAR(128) COMMENT '特征说明',
+    PRIMARY KEY (feature_name)
+) COMMENT='租金预测特征重要性';
+
+DROP TABLE IF EXISTS ads_rent_predict_scatter;
+CREATE TABLE ads_rent_predict_scatter (
+    fy_id VARCHAR(32) NOT NULL,
+    xzq VARCHAR(64),
+    actual_zj INT COMMENT '实际月租金',
+    predict_zj INT COMMENT '预测月租金',
+    jzmj DECIMAL(5,1) COMMENT '建筑面积',
+    PRIMARY KEY (fy_id)
+) COMMENT='租金预测散点图(抽样)';
